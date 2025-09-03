@@ -4,9 +4,13 @@ import axios from 'axios';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import Layout from './components/Layout';
+import VisitForm from './components/VisitForm';
+import CustomersPage from './components/CustomersPage';
+import PermissionsPage from './components/PermissionsPage';
+import VisitDetail from './components/VisitDetail';
 
 // Configure axios defaults
-axios.defaults.baseURL = 'http://localhost:3001';
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 axios.defaults.withCredentials = true;
 
 function App() {
@@ -74,11 +78,61 @@ function App() {
               <Navigate to="/login" replace />
             } 
           />
+          <Route
+            path="/visits/new"
+            element={
+              authenticated ?
+              <Layout user={user} onLogout={handleLogout}>
+                <VisitForm />
+              </Layout> :
+              <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/visits/:id"
+            element={
+              authenticated ?
+              <Layout user={user} onLogout={handleLogout}>
+                <VisitDetail user={user} />
+              </Layout> :
+              <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/visits/:id/edit"
+            element={
+              authenticated ?
+              <Layout user={user} onLogout={handleLogout}>
+                <VisitForm />
+              </Layout> :
+              <Navigate to="/login" replace />
+            }
+          />
           <Route 
             path="/" 
             element={
               <Navigate to={authenticated ? "/dashboard" : "/login"} replace />
             } 
+          />
+          <Route
+            path="/customers"
+            element={
+              authenticated ?
+              <Layout user={user} onLogout={handleLogout}>
+                <CustomersPage />
+              </Layout> :
+              <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/admin/permissions"
+            element={
+              authenticated && user?.role === 'admin' ?
+              <Layout user={user} onLogout={handleLogout}>
+                <PermissionsPage />
+              </Layout> :
+              <Navigate to={authenticated ? "/dashboard" : "/login"} replace />
+            }
           />
         </Routes>
       </div>

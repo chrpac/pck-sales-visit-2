@@ -18,6 +18,9 @@ const { errorHandler, notFound } = require('./middleware/errorHandler');
 const authRoutes = require('./routers/authRoutes');
 const userRoutes = require('./routers/userRoutes');
 const oauthRoutes = require('./routers/oauthRoutes');
+const customerRoutes = require('./routers/customerRoutes');
+const visitRoutes = require('./routers/visitRoutes');
+const uploadRoutes = require('./routers/uploadRoutes');
 
 // Create Express app
 const app = express();
@@ -35,7 +38,8 @@ app.use(helmet({
       imgSrc: ["'self'", "data:", "https:"],
     },
   },
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
 
 // Rate limiting
@@ -96,6 +100,9 @@ app.get('/health', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/oauth', oauthRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/customers', customerRoutes);
+app.use('/api/v1/visits', visitRoutes);
+app.use('/api/v1/uploads', uploadRoutes);
 
 // Handle undefined routes
 app.all('*', notFound);

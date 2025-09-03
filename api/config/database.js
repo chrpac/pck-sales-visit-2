@@ -14,6 +14,21 @@ const connectDB = async () => {
     });
 
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
+
+    // Ensure obsolete indexes are cleaned up (e.g., legacy username unique index)
+    try {
+      const col = mongoose.connection.db.collection('users');
+      const indexes = await col.indexes();
+      const legacyUsernameIdx = indexes.find(i => i.name === 'username_1');
+      if (legacyUsernameIdx) {
+        logger.warn('Dropping legacy index username_1 from users collection');
+        await col.dropIndex('username_1');
+        logger.info('Dropped index username_1');
+      }
+    } catch (idxErr) {
+      // Non-fatal: log and continue
+      logger.warn(`Index maintenance warning: ${idxErr.message}`);
+    }
     
     // Handle connection events
     mongoose.connection.on('error', (err) => {

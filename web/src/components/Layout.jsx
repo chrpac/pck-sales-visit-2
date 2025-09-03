@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { 
   HomeIcon, 
   Bars3Icon, 
@@ -9,10 +10,16 @@ import {
 
 function Layout({ children, user, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
 
-  const navigation = [
-    { name: 'Home', href: '#', icon: HomeIcon, current: true },
+  const baseNav = [
+    { name: 'Home', href: '/dashboard', icon: HomeIcon },
+    { name: 'ฐานข้อมูลลูกค้า', href: '/customers', icon: HomeIcon },
   ];
+  if (user?.role === 'admin') {
+    baseNav.push({ name: 'จัดการสิทธิ์', href: '/admin/permissions', icon: HomeIcon });
+  }
+  const navigation = baseNav.map(item => ({ ...item, current: location.pathname === item.href }));
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-100">

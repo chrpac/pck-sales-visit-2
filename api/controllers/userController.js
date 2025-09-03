@@ -197,5 +197,59 @@ module.exports = {
   updateUser,
   deleteUser,
   deactivateUser,
-  activateUser
+  activateUser,
+  // Added export placeholder; function added below
+};
+
+// List sales users (lightweight for dropdown)
+// Note: export placed above to not disturb existing usage; add named export here
+module.exports.getSalesUsers = async (req, res, next) => {
+  try {
+    const { search = '', limit = 10 } = req.query;
+    const filter = { role: 'sales', isActive: true };
+    if (search) {
+      filter.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { displayName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+    const users = await User.find(filter)
+      .limit(parseInt(limit))
+      .sort({ displayName: 1, firstName: 1 })
+      .select('displayName firstName lastName email role');
+
+    res.status(200).json({ status: 'success', results: users.length, data: { users } });
+  } catch (error) {
+    logger.error('Get sales users error:', error);
+    next(error);
+  }
+};
+
+// Create user (admin)
+module.exports.createUser = async (req, res, next) => {
+  try {
+    const { email, firstName, lastName, displayName, role, isActive = true } = req.body;
+
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.status(400).json({ status: 'fail', message: 'Email already exists' });
+    }
+
+    const user = await User.create({
+      email,
+      firstName,
+      lastName,
+      displayName: displayName || `${firstName} ${lastName}`,
+      role,
+      isActive,
+    });
+
+    logger.info(`Admin created user: ${user.email}`);
+    res.status(201).json({ status: 'success', data: { user } });
+  } catch (error) {
+    logger.error('Create user error:', error);
+    next(error);
+  }
 };
