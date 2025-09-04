@@ -7,7 +7,8 @@ function LoginPage() {
 
   const handleMicrosoftLogin = () => {
     // Redirect to Microsoft OAuth endpoint
-    window.location.href = 'http://localhost:3001/api/v1/oauth/microsoft';
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+    window.location.href = `${API_BASE}/api/v1/oauth/microsoft`;
   };
 
   const getErrorMessage = (errorCode) => {
