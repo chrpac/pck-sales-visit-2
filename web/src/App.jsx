@@ -12,7 +12,7 @@ import VisitDetail from './components/VisitDetail';
 // Configure axios defaults
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 axios.defaults.withCredentials = true;
-
+console.log(axios.defaults.baseURL)
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
