@@ -10,7 +10,7 @@ import PermissionsPage from './components/PermissionsPage';
 import VisitDetail from './components/VisitDetail';
 
 // Configure axios defaults
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://api-sales-visit.ezcow.net';
 axios.defaults.withCredentials = true;
 
 function App() {
