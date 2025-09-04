@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile
     container_name: pck-api
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=3001
       - DB_HOST=mongodb://mongo:27017
       - DB_NAME=site-visit-2
