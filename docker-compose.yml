@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile
     container_name: pck-api
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3001
       - DB_HOST=mongodb://mongo:27017
       - DB_NAME=site-visit-2
@@ -43,7 +43,7 @@ services:
       context: ./web
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3001}
+        VITE_:qAPI_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3001}
     container_name: pck-web
     ports:
       - "5173:80"
