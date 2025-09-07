@@ -1,4 +1,8 @@
-FROM node:18-alpine
+FROM node:22-alpine
+ENV TZ=Asia/Bangkok
+RUN apk add --no-cache tzdata \
+  && cp /usr/share/zoneinfo/Asia/Bangkok /etc/localtime \
+  && echo "Asia/Bangkok" > /etc/timezone
 
 WORKDIR /usr/src/app
 
