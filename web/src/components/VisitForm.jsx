@@ -278,27 +278,75 @@ function VisitForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อพนักงานขาย</label>
             {!manualSales && (
               <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setSalesOpen(false); }}>
-                <div className="flex items-center border rounded-md px-3 py-2 cursor-text" onClick={() => { const el = document.getElementById('sales-search'); el && el.focus(); setSalesOpen(true); }}>
-                  <input
-                    id="sales-search"
-                    type="text"
-                    className="w-full outline-none"
-                    placeholder="ค้นหาและเลือกพนักงานขาย..."
-                    value={salesSearch}
-                    onChange={(e) => { setSalesSearch(e.target.value); setSalesOpen(true); }}
-                    onFocus={() => setSalesOpen(true)}
-                  />
-                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clipRule="evenodd"/></svg>
-                </div>
-                {(salesOpen && salesOptions.length > 0) && (
-                  <div className="absolute z-10 mt-1 w-full border rounded-md bg-white max-h-56 overflow-auto shadow-sm">
-                    {salesOptions.map(u => (
-                      <div key={u._id} className={`px-3 py-2 cursor-pointer hover:bg-gray-50 ${selectedSales?._id===u._id?'bg-blue-50':''}`}
-                        tabIndex={0}
-                        onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => { setSelectedSales(u); setSalesSearch(u.displayName || `${u.firstName || ''} ${u.lastName || ''}`); setSalesOpen(false); }}
-                      >{u.displayName || `${u.firstName || ''} ${u.lastName || ''}`}</div>
-                    ))}
+                <button
+                  id="sales-dropdown-button"
+                  type="button"
+                  className="w-full text-left bg-white border hover:border-gray-400 focus:ring-2 focus:ring-blue-300 rounded-md text-sm px-3 py-2 inline-flex items-center justify-between"
+                  onClick={() => {
+                    const nextOpen = !salesOpen;
+                    setSalesOpen(nextOpen);
+                    if (nextOpen && selectedSales) setSalesSearch('');
+                  }}
+                >
+                  <span className="truncate">
+                    {selectedSales ? (selectedSales.displayName || `${selectedSales.firstName || ''} ${selectedSales.lastName || ''}`) : 'เลือกพนักงานขาย'}
+                  </span>
+                  <svg className="w-3 h-3 ms-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4"/>
+                  </svg>
+                </button>
+
+                {salesOpen && (
+                  <div id="sales-dropdown" className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-sm border">
+                    <div className="p-3">
+                      <label htmlFor="sales-input-search" className="sr-only">ค้นหา</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                          <svg className="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                          </svg>
+                        </div>
+                        <input
+                          id="sales-input-search"
+                          type="text"
+                          className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="ค้นหาพนักงานขาย"
+                          value={salesSearch}
+                          onChange={(e) => setSalesSearch(e.target.value)}
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+                    <ul className="max-h-56 px-3 pb-3 overflow-y-auto text-sm text-gray-700" aria-labelledby="sales-dropdown-button">
+                      {salesOptions.length === 0 && (
+                        <li className="px-2 py-2 text-gray-500">ไม่พบรายการ</li>
+                      )}
+                      {salesOptions.map((u) => {
+                        const name = u.displayName || `${u.firstName || ''} ${u.lastName || ''}`;
+                        const checked = selectedSales?._id === u._id;
+                        const inputId = `sales-option-${u._id}`;
+                        return (
+                          <li key={u._id}>
+                            <button
+                              type="button"
+                              className={`w-full flex items-center ps-2 py-2 rounded-sm hover:bg-gray-100 ${checked ? 'bg-blue-50' : ''}`}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => { setSelectedSales(u); setSalesSearch(''); setSalesOpen(false); }}
+                            >
+                              <input
+                                id={inputId}
+                                type="radio"
+                                name="sales-user"
+                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500"
+                                readOnly
+                                checked={checked}
+                              />
+                              <label htmlFor={inputId} className="w-full ms-2 text-sm font-medium text-gray-900 text-left truncate">{name}</label>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 )}
                 {selectedSales && (
@@ -334,17 +382,74 @@ function VisitForm() {
             <label className="block text-sm font-medium text-gray-700 mb-1">ชื่อบริษัท</label>
             {!newCustomerMode && (
               <div className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setCustomerOpen(false); }}>
-                <div className="flex items-center border rounded-md px-3 py-2 cursor-text" onClick={() => { const el = document.getElementById('customer-search'); el && el.focus(); setCustomerOpen(true); }}>
-                  <input type="text" id="customer-search" className="w-full outline-none" placeholder="ค้นหาและเลือกบริษัท..." value={customerSearch} onChange={e => { setCustomerSearch(e.target.value); setCustomerOpen(true); }} onFocus={() => setCustomerOpen(true)} />
-                  <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.9 14.32a8 8 0 111.414-1.414l3.387 3.387a1 1 0 01-1.414 1.414l-3.387-3.387zM14 8a6 6 0 11-12 0 6 6 0 0112 0z" clipRule="evenodd"/></svg>
-                </div>
-                {(customerOpen && customerOptions.length > 0) && (
-                  <div className="absolute z-10 mt-1 w-full border rounded-md bg-white max-h-56 overflow-auto shadow-sm">
-                    {customerOptions.map(c => (
-                      <div key={c._id} className={`px-3 py-2 cursor-pointer hover:bg-gray-50 ${selectedCustomer?._id===c._id?'bg-blue-50':''}`} tabIndex={0} onMouseDown={(e) => e.preventDefault()} onClick={() => { setSelectedCustomer(c); setCustomerSearch(c.name); setCustomerOpen(false); }}>
-                        {c.name}
+                <button
+                  id="customer-dropdown-button"
+                  type="button"
+                  className="w-full text-left bg-white border hover:border-gray-400 focus:ring-2 focus:ring-blue-300 rounded-md text-sm px-3 py-2 inline-flex items-center justify-between"
+                  onClick={() => {
+                    const nextOpen = !customerOpen;
+                    setCustomerOpen(nextOpen);
+                    if (nextOpen && selectedCustomer) setCustomerSearch('');
+                  }}
+                >
+                  <span className="truncate">
+                    {selectedCustomer ? selectedCustomer.name : 'เลือกบริษัท'}
+                  </span>
+                  <svg className="w-3 h-3 ms-2 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4"/>
+                  </svg>
+                </button>
+
+                {customerOpen && (
+                  <div id="customer-dropdown" className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-sm border">
+                    <div className="p-3">
+                      <label htmlFor="customer-input-search" className="sr-only">ค้นหา</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                          <svg className="w-4 h-4 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                          </svg>
+                        </div>
+                        <input
+                          id="customer-input-search"
+                          type="text"
+                          className="block w-full p-2 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="ค้นหาบริษัท"
+                          value={customerSearch}
+                          onChange={(e) => setCustomerSearch(e.target.value)}
+                          autoFocus
+                        />
                       </div>
-                    ))}
+                    </div>
+                    <ul className="max-h-56 px-3 pb-3 overflow-y-auto text-sm text-gray-700" aria-labelledby="customer-dropdown-button">
+                      {customerOptions.length === 0 && (
+                        <li className="px-2 py-2 text-gray-500">ไม่พบรายการ</li>
+                      )}
+                      {customerOptions.map((c) => {
+                        const checked = selectedCustomer?._id === c._id;
+                        const inputId = `customer-option-${c._id}`;
+                        return (
+                          <li key={c._id}>
+                            <button
+                              type="button"
+                              className={`w-full flex items-center ps-2 py-2 rounded-sm hover:bg-gray-100 ${checked ? 'bg-blue-50' : ''}`}
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => { setSelectedCustomer(c); setCustomerSearch(''); setCustomerOpen(false); }}
+                            >
+                              <input
+                                id={inputId}
+                                type="radio"
+                                name="customer"
+                                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded-sm focus:ring-blue-500"
+                                readOnly
+                                checked={checked}
+                              />
+                              <label htmlFor={inputId} className="w-full ms-2 text-sm font-medium text-gray-900 text-left truncate">{c.name}</label>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
                 )}
               </div>
@@ -417,7 +522,7 @@ function VisitForm() {
                   </div>
                 )}
               </div>
-              <input id="business-card-input" type="file" accept="image/*" capture="environment" className="hidden" onChange={e => handleBusinessCardSelect(e.target.files?.[0])} />
+              <input id="business-card-input" type="file" accept="image/*" className="hidden" onChange={e => handleBusinessCardSelect(e.target.files?.[0])} />
             </div>
           </div>
         </div>
@@ -508,7 +613,7 @@ function VisitForm() {
                   </div>
                 )}
               </div>
-              <input id="visit-photos-input" type="file" accept="image/*" multiple capture className="hidden" onChange={e => handlePhotosSelect(e.target.files)} />
+              <input id="visit-photos-input" type="file" accept="image/*" multiple className="hidden" onChange={e => handlePhotosSelect(e.target.files)} />
             </div>
           </div>
         </div>

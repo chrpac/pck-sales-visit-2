@@ -1,6 +1,7 @@
 const VisitRecord = require('../models/VisitRecord');
 const Customer = require('../models/Customer');
 const logger = require('../config/logger');
+const ExcelJS = require('exceljs');
 
 // Create visit (with optional inline new customer)
 const createVisit = async (req, res, next) => {
@@ -82,16 +83,62 @@ module.exports.listVisits = async (req, res, next) => {
       filter.createdBy = req.user._id;
     }
 
-    const q = VisitRecord.find(filter)
+    // Date range filter (inclusive)
+    const { startDate, endDate, customerName, status, customerId } = req.query;
+    if (startDate || endDate) {
+      filter.visitAt = {};
+      if (startDate) {
+        const s = new Date(startDate);
+        if (!isNaN(s.getTime())) filter.visitAt.$gte = s;
+      }
+      if (endDate) {
+        const e = new Date(endDate);
+        if (!isNaN(e.getTime())) {
+          e.setHours(23, 59, 59, 999);
+          filter.visitAt.$lte = e;
+        }
+      }
+      if (Object.keys(filter.visitAt).length === 0) delete filter.visitAt;
+    }
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (customerId) {
+      filter.customer = customerId;
+    }
+
+    // Build base query
+    let q = VisitRecord.find(filter)
       .sort({ visitAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate('customer', 'name province')
       .populate('salesUser', 'displayName firstName lastName email');
 
+    // Customer name filter (requires lookup of IDs first)
+    if (customerName) {
+      const nameRegex = new RegExp(customerName, 'i');
+      const ids = await Customer.find({ name: nameRegex }).distinct('_id');
+      q = VisitRecord.find({ ...filter, customer: { $in: ids } })
+        .sort({ visitAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('customer', 'name province')
+        .populate('salesUser', 'displayName firstName lastName email');
+    }
+
     const [items, total] = await Promise.all([
       q,
-      VisitRecord.countDocuments(filter),
+      (async () => {
+        if (customerName) {
+          const nameRegex = new RegExp(customerName, 'i');
+          const ids = await Customer.find({ name: nameRegex }).distinct('_id');
+          return VisitRecord.countDocuments({ ...filter, customer: { $in: ids } });
+        }
+        return VisitRecord.countDocuments(filter);
+      })(),
     ]);
 
     res.status(200).json({
@@ -186,6 +233,84 @@ module.exports.deleteVisit = async (req, res, next) => {
     res.status(204).json({ status: 'success', data: null });
   } catch (error) {
     logger.error('Delete visit error:', error);
+    next(error);
+  }
+};
+
+// Export visits to Excel with filters
+module.exports.exportVisits = async (req, res, next) => {
+  try {
+    // Reuse filter logic from listVisits
+    const filter = {};
+    if (!['admin', 'manager'].includes(req.user.role)) {
+      filter.createdBy = req.user._id;
+    }
+    const { startDate, endDate, customerName, status, customerId } = req.query;
+    if (startDate || endDate) {
+      filter.visitAt = {};
+      if (startDate) {
+        const s = new Date(startDate);
+        if (!isNaN(s.getTime())) filter.visitAt.$gte = s;
+      }
+      if (endDate) {
+        const e = new Date(endDate);
+        if (!isNaN(e.getTime())) {
+          e.setHours(23, 59, 59, 999);
+          filter.visitAt.$lte = e;
+        }
+      }
+      if (Object.keys(filter.visitAt).length === 0) delete filter.visitAt;
+    }
+    if (status) filter.status = status;
+    if (customerId) filter.customer = customerId;
+
+    let mongoFilter = { ...filter };
+    if (customerName) {
+      const nameRegex = new RegExp(customerName, 'i');
+      const ids = await Customer.find({ name: nameRegex }).distinct('_id');
+      mongoFilter = { ...filter, customer: { $in: ids } };
+    }
+
+    const visits = await VisitRecord.find(mongoFilter)
+      .sort({ visitAt: -1 })
+      .populate('customer', 'name province')
+      .populate('salesUser', 'displayName firstName lastName email');
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Visits');
+    sheet.columns = [
+      { header: 'วันที่เข้าพบ', key: 'visitAt', width: 20 },
+      { header: 'ลูกค้า', key: 'customerName', width: 30 },
+      { header: 'จังหวัด', key: 'province', width: 16 },
+      { header: 'ลักษณะงาน', key: 'jobType', width: 22 },
+      { header: 'พนักงานขาย', key: 'salesName', width: 24 },
+      { header: 'สถานะ', key: 'status', width: 14 },
+      { header: 'วัตถุประสงค์', key: 'purpose', width: 28 },
+      { header: 'รายละเอียด', key: 'details', width: 50 },
+    ];
+
+    visits.forEach(v => {
+      const salesName = v.salesUser
+        ? (v.salesUser.displayName || `${v.salesUser.firstName || ''} ${v.salesUser.lastName || ''}`)
+        : (v.salesNameManual || '-');
+      sheet.addRow({
+        visitAt: new Date(v.visitAt).toLocaleString('th-TH'),
+        customerName: v.customer?.name || '-',
+        province: v.customer?.province || '-',
+        jobType: v.jobType || '-',
+        salesName,
+        status: v.status,
+        purpose: v.purpose || '-',
+        details: v.details || '-',
+      });
+    });
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="visits.xlsx"');
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    logger.error('Export visits error:', error);
     next(error);
   }
 };

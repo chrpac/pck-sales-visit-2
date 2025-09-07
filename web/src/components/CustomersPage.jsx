@@ -233,7 +233,7 @@ export default function CustomersPage() {
                       </div>
                     )}
                   </div>
-                  <input id="customer-business-card-input" type="file" accept="image/*" capture="environment" className="hidden" onChange={e => handleUploadBusinessCard(e.target.files?.[0])} />
+                  <input id="customer-business-card-input" type="file" accept="image/*" className="hidden" onChange={e => handleUploadBusinessCard(e.target.files?.[0])} />
                 </div>
               </div>
             </div>

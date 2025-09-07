@@ -9,6 +9,7 @@ router.use(protect);
 
 router.post('/', validateVisitCreation, visitController.createVisit);
 router.get('/', visitController.listVisits);
+router.get('/export/xlsx', visitController.exportVisits);
 router.get('/:id', visitController.getVisitById);
 router.patch('/:id', validateVisitUpdate, visitController.updateVisit);
 router.delete('/:id', visitController.deleteVisit);

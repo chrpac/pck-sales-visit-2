@@ -31,7 +31,8 @@
     "joi": "^17.9.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.5.0",
-    "winston": "^3.10.0"
+    "winston": "^3.10.0",
+    "exceljs": "^4.4.0"
   },
   "devDependencies": {
     "jest": "^29.6.2",
