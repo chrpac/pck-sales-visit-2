@@ -15,6 +15,7 @@ function Dashboard({ user }) {
   const [endDate, setEndDate] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [status, setStatus] = useState('');
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const loadData = async (overrides = {}) => {
     setLoading(true);
@@ -50,6 +51,7 @@ function Dashboard({ user }) {
   const applyFilters = () => {
     setPage(1);
     loadData({ page: 1 });
+    setFiltersOpen(false);
   };
 
   const clearFilters = () => {
@@ -60,6 +62,7 @@ function Dashboard({ user }) {
     setPage(1);
     // Ensure cleared filters are used immediately
     loadData({ page: 1, startDate: '', endDate: '', customerName: '', status: '' });
+    setFiltersOpen(false);
   };
 
   const downloadExcel = async () => {
@@ -111,37 +114,56 @@ function Dashboard({ user }) {
 
       <div className="bg-white shadow rounded-lg">
         <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">การเข้าพบล่าสุด</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">วันที่เริ่ม</label>
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full border rounded-md px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">วันที่สิ้นสุด</label>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border rounded-md px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">ชื่อลูกค้า</label>
-              <input type="text" placeholder="ค้นหาชื่อลูกค้า" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full border rounded-md px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-700 mb-1">สถานะงาน</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full border rounded-md px-3 py-2">
-                <option value="">ทั้งหมด</option>
-                <option value="planned">วางแผนไว้</option>
-                <option value="in-progress">กำลังดำเนินการ</option>
-                <option value="completed">เสร็จสิ้น</option>
-                <option value="cancelled">ยกเลิก</option>
-                <option value="pending">ยังไม่เข้าพบ/ข้อมูลไม่ครบ</option>
-              </select>
-            </div>
-            <div className="flex items-end gap-2">
-              <button onClick={applyFilters} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md w-full">กรอง</button>
-              <button onClick={clearFilters} className="px-4 py-2 border rounded-md w-full">ล้าง</button>
-            </div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-medium text-gray-900">การเข้าพบล่าสุด</h2>
+            <button onClick={() => setFiltersOpen(true)} className="inline-flex items-center gap-2 px-3 py-1.5 border rounded-md text-sm">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12 10 19 14 21 14 12 22 3"/></svg>
+              ตัวกรอง
+            </button>
           </div>
+
+          {filtersOpen && (
+            <div className="fixed inset-0 z-20">
+              <div className="absolute inset-0 bg-black/40" onClick={() => setFiltersOpen(false)}></div>
+              <div className="absolute inset-x-0 bottom-0 md:inset-0 md:flex md:items-center md:justify-center">
+                <div className="bg-white md:rounded-lg md:shadow-lg w-full md:max-w-xl md:mx-auto p-4 md:p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-base font-semibold">ตัวกรองข้อมูล</h3>
+                    <button onClick={() => setFiltersOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm text-gray-700 mb-1">วันที่เริ่ม</label>
+                      <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full border rounded-md px-3 py-2" />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-700 mb-1">วันที่สิ้นสุด</label>
+                      <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border rounded-md px-3 py-2" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-gray-700 mb-1">ชื่อลูกค้า</label>
+                      <input type="text" placeholder="ค้นหาชื่อลูกค้า" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full border rounded-md px-3 py-2" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-gray-700 mb-1">สถานะงาน</label>
+                      <select value={status} onChange={(e) => setStatus(e.target.value)} className="w-full border rounded-md px-3 py-2">
+                        <option value="">ทั้งหมด</option>
+                        <option value="planned">วางแผนไว้</option>
+                        <option value="in-progress">กำลังดำเนินการ</option>
+                        <option value="completed">เสร็จสิ้น</option>
+                        <option value="cancelled">ยกเลิก</option>
+                        <option value="pending">ยังไม่เข้าพบ/ข้อมูลไม่ครบ</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <button onClick={applyFilters} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md w-full">ใช้ตัวกรอง</button>
+                    <button onClick={clearFilters} className="px-4 py-2 border rounded-md w-full">ล้าง</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm text-gray-600">หน้า {page} / {pages}</div>
