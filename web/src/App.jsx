@@ -8,6 +8,7 @@ import VisitForm from './components/VisitForm';
 import CustomersPage from './components/CustomersPage';
 import PermissionsPage from './components/PermissionsPage';
 import VisitDetail from './components/VisitDetail';
+import VisitPrint from './components/VisitPrint';
 
 // Configure axios defaults
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -95,6 +96,15 @@ function App() {
               <Layout user={user} onLogout={handleLogout}>
                 <VisitDetail user={user} />
               </Layout> :
+              <Navigate to="/login" replace />
+            }
+          />
+          <Route
+            path="/visits/:id/print"
+            element={
+              authenticated ?
+              // No Layout for clean print view
+              <VisitPrint /> :
               <Navigate to="/login" replace />
             }
           />

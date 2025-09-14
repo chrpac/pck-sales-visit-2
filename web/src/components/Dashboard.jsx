@@ -15,6 +15,7 @@ function Dashboard({ user }) {
   const [endDate, setEndDate] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [status, setStatus] = useState('');
+  const [salesName, setSalesName] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const loadData = async (overrides = {}) => {
@@ -27,12 +28,14 @@ function Dashboard({ user }) {
       const e = overrides.endDate !== undefined ? overrides.endDate : endDate;
       const cn = overrides.customerName !== undefined ? overrides.customerName : customerName;
       const st = overrides.status !== undefined ? overrides.status : status;
+      const sn = overrides.salesName !== undefined ? overrides.salesName : salesName;
 
       const params = { page: p, limit: l };
       if (s) params.startDate = s;
       if (e) params.endDate = e;
       if (cn) params.customerName = cn;
       if (st) params.status = st;
+      if (sn) params.salesName = sn;
       const res = await axios.get('/api/v1/visits', { params });
       setVisits(res.data.data || []);
       setPages(res.data.pagination?.pages || 1);
@@ -59,9 +62,10 @@ function Dashboard({ user }) {
     setEndDate('');
     setCustomerName('');
     setStatus('');
+    setSalesName('');
     setPage(1);
     // Ensure cleared filters are used immediately
-    loadData({ page: 1, startDate: '', endDate: '', customerName: '', status: '' });
+    loadData({ page: 1, startDate: '', endDate: '', customerName: '', status: '', salesName: '' });
     setFiltersOpen(false);
   };
 
@@ -72,6 +76,7 @@ function Dashboard({ user }) {
       if (endDate) params.append('endDate', endDate);
       if (customerName) params.append('customerName', customerName);
       if (status) params.append('status', status);
+      if (salesName) params.append('salesName', salesName);
       const url = `/api/v1/visits/export/xlsx?${params.toString()}`;
       const res = await axios.get(url, { responseType: 'blob' });
       const blob = new Blob([res.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -143,6 +148,10 @@ function Dashboard({ user }) {
                     <div className="md:col-span-2">
                       <label className="block text-sm text-gray-700 mb-1">ชื่อลูกค้า</label>
                       <input type="text" placeholder="ค้นหาชื่อลูกค้า" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full border rounded-md px-3 py-2" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-sm text-gray-700 mb-1">ชื่อพนักงานขาย</label>
+                      <input type="text" placeholder="ค้นหาชื่อพนักงานขาย" value={salesName} onChange={(e) => setSalesName(e.target.value)} className="w-full border rounded-md px-3 py-2" />
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm text-gray-700 mb-1">สถานะงาน</label>

@@ -1,5 +1,6 @@
 const VisitRecord = require('../models/VisitRecord');
 const Customer = require('../models/Customer');
+const User = require('../models/User');
 const logger = require('../config/logger');
 const ExcelJS = require('exceljs');
 
@@ -84,7 +85,7 @@ module.exports.listVisits = async (req, res, next) => {
     }
 
     // Date range filter (inclusive)
-    const { startDate, endDate, customerName, status, customerId } = req.query;
+    const { startDate, endDate, customerName, status, customerId, salesName } = req.query;
     if (startDate || endDate) {
       filter.visitAt = {};
       if (startDate) {
@@ -109,36 +110,45 @@ module.exports.listVisits = async (req, res, next) => {
       filter.customer = customerId;
     }
 
-    // Build base query
-    let q = VisitRecord.find(filter)
-      .sort({ visitAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate('customer', 'name province')
-      .populate('salesUser', 'displayName firstName lastName email');
+    // Compose mongo filter for text-based lookups
+    let mongoFilter = { ...filter };
 
-    // Customer name filter (requires lookup of IDs first)
+    // Customer name filter (lookup customer IDs first)
     if (customerName) {
-      const nameRegex = new RegExp(customerName, 'i');
-      const ids = await Customer.find({ name: nameRegex }).distinct('_id');
-      q = VisitRecord.find({ ...filter, customer: { $in: ids } })
+      const customerRegex = new RegExp(customerName, 'i');
+      const customerIds = await Customer.find({ name: customerRegex }).distinct('_id');
+      mongoFilter = { ...mongoFilter, customer: { $in: customerIds } };
+    }
+
+    // Sales name filter (match linked user names or manual sales name)
+    if (salesName) {
+      const salesRegex = new RegExp(salesName, 'i');
+      const salesUserIds = await User.find({
+        isActive: true,
+        $or: [
+          { displayName: { $regex: salesRegex } },
+          { firstName: { $regex: salesRegex } },
+          { lastName: { $regex: salesRegex } },
+          { email: { $regex: salesRegex } },
+        ],
+      }).distinct('_id');
+      mongoFilter = {
+        ...mongoFilter,
+        $or: [
+          { salesUser: { $in: salesUserIds } },
+          { salesNameManual: { $regex: salesRegex } },
+        ],
+      };
+    }
+
+    const [items, total] = await Promise.all([
+      VisitRecord.find(mongoFilter)
         .sort({ visitAt: -1 })
         .skip(skip)
         .limit(limit)
         .populate('customer', 'name province')
-        .populate('salesUser', 'displayName firstName lastName email');
-    }
-
-    const [items, total] = await Promise.all([
-      q,
-      (async () => {
-        if (customerName) {
-          const nameRegex = new RegExp(customerName, 'i');
-          const ids = await Customer.find({ name: nameRegex }).distinct('_id');
-          return VisitRecord.countDocuments({ ...filter, customer: { $in: ids } });
-        }
-        return VisitRecord.countDocuments(filter);
-      })(),
+        .populate('salesUser', 'displayName firstName lastName email'),
+      VisitRecord.countDocuments(mongoFilter),
     ]);
 
     res.status(200).json({
@@ -245,7 +255,7 @@ module.exports.exportVisits = async (req, res, next) => {
     if (!['admin', 'manager'].includes(req.user.role)) {
       filter.createdBy = req.user._id;
     }
-    const { startDate, endDate, customerName, status, customerId } = req.query;
+    const { startDate, endDate, customerName, status, customerId, salesName } = req.query;
     if (startDate || endDate) {
       filter.visitAt = {};
       if (startDate) {
@@ -269,6 +279,26 @@ module.exports.exportVisits = async (req, res, next) => {
       const nameRegex = new RegExp(customerName, 'i');
       const ids = await Customer.find({ name: nameRegex }).distinct('_id');
       mongoFilter = { ...filter, customer: { $in: ids } };
+    }
+
+    if (salesName) {
+      const salesRegex = new RegExp(salesName, 'i');
+      const salesUserIds = await User.find({
+        isActive: true,
+        $or: [
+          { displayName: { $regex: salesRegex } },
+          { firstName: { $regex: salesRegex } },
+          { lastName: { $regex: salesRegex } },
+          { email: { $regex: salesRegex } },
+        ],
+      }).distinct('_id');
+      mongoFilter = {
+        ...mongoFilter,
+        $or: [
+          { salesUser: { $in: salesUserIds } },
+          { salesNameManual: { $regex: salesRegex } },
+        ],
+      };
     }
 
     const visits = await VisitRecord.find(mongoFilter)

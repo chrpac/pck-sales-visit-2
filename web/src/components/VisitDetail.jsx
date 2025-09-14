@@ -53,7 +53,7 @@ export default function VisitDetail({ user }) {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">รายละเอียดการเข้าพบ</h1>
         <div className="flex gap-2">
-          <button className="px-3 py-2 rounded-md border" onClick={() => window.print()}>พิมพ์</button>
+          <button className="px-3 py-2 rounded-md border" onClick={() => window.open(`/visits/${id}/print`, '_blank')}>พิมพ์</button>
           {isOwner && (
             <>
               <button className="px-3 py-2 rounded-md text-white bg-blue-600 hover:bg-blue-700" onClick={() => navigate(`/visits/${id}/edit`)}>แก้ไข</button>
