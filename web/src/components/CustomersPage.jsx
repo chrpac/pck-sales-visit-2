@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
+import VisitHistoryModal from './VisitHistoryModal';
 
 function useDebounced(value, delay = 300) {
   const [v, setV] = useState(value);
@@ -46,6 +47,10 @@ export default function CustomersPage() {
   const [businessDragOver, setBusinessDragOver] = useState(false);
   const [uploadingBusiness, setUploadingBusiness] = useState(false);
 
+  // Visit history state
+  const [showVisitHistory, setShowVisitHistory] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+
   const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
   const fileSrc = (f) => (f?.key ? `${API_BASE}/api/v1/uploads/proxy?key=${encodeURIComponent(f.key)}` : f?.url);
 
@@ -74,6 +79,12 @@ export default function CustomersPage() {
       setBusinessCardPreview('');
     }
     setShowEditor(true);
+  };
+
+  // Visit history functions
+  const openVisitHistory = (customer) => {
+    setSelectedCustomer(customer);
+    setShowVisitHistory(true);
   };
 
   const load = async () => {
@@ -177,6 +188,7 @@ export default function CustomersPage() {
                     <td className="px-6 py-4 text-sm text-gray-600">{c.province || '-'}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">{c.contacts?.length || 0}</td>
                     <td className="px-6 py-4 text-right text-sm">
+                      <button className="text-green-600 mr-3" onClick={() => openVisitHistory(c)}>ดูประวัติการเข้าพบ</button>
                       <button className="text-blue-600 mr-3" onClick={() => openEdit(c)}>แก้ไข</button>
                       <button className="text-red-600" onClick={() => handleDelete(c._id)}>ลบ</button>
                     </td>
@@ -250,6 +262,12 @@ export default function CustomersPage() {
           </form>
         </div>
       )}
+
+      <VisitHistoryModal 
+        isOpen={showVisitHistory}
+        onClose={() => setShowVisitHistory(false)}
+        customer={selectedCustomer}
+      />
     </div>
   );
 }

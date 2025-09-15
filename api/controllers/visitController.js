@@ -312,11 +312,18 @@ module.exports.exportVisits = async (req, res, next) => {
       { header: 'วันที่เข้าพบ', key: 'visitAt', width: 20 },
       { header: 'ลูกค้า', key: 'customerName', width: 30 },
       { header: 'จังหวัด', key: 'province', width: 16 },
-      { header: 'ลักษณะงาน', key: 'jobType', width: 22 },
+      { header: 'ลักษณะงานที่เสนอขาย', key: 'jobType', width: 25 },
       { header: 'พนักงานขาย', key: 'salesName', width: 24 },
       { header: 'สถานะ', key: 'status', width: 14 },
-      { header: 'วัตถุประสงค์', key: 'purpose', width: 28 },
-      { header: 'รายละเอียด', key: 'details', width: 50 },
+      { header: 'วัตถุประสงค์ในการเข้าพบ', key: 'purpose', width: 30 },
+      { header: 'งบประมาณ', key: 'budgetTHB', width: 15 },
+      { header: 'ผลิตภัณฑ์ที่นำเสนอ', key: 'productPresented', width: 30 },
+      { header: 'รายละเอียดการเข้าพบ', key: 'details', width: 40 },
+      { header: 'ประเมินผลการเข้าพบ', key: 'evaluationScore', width: 20 },
+      { header: 'แผนการดำเนินงานต่อไป', key: 'nextActionPlan', width: 35 },
+      { header: 'เข้าพบครั้งต่อไป', key: 'nextVisitAt', width: 20 },
+      { header: 'เหตุผลที่ทำให้ขายได้', key: 'winReason', width: 30 },
+      { header: 'ต้องการความช่วยเหลือด้านใด', key: 'needHelp', width: 35 },
     ];
 
     visits.forEach(v => {
@@ -331,7 +338,14 @@ module.exports.exportVisits = async (req, res, next) => {
         salesName,
         status: v.status,
         purpose: v.purpose || '-',
+        budgetTHB: v.budgetTHB ? v.budgetTHB.toLocaleString('th-TH') : '-',
+        productPresented: v.productPresented || '-',
         details: v.details || '-',
+        evaluationScore: v.evaluationScore !== undefined ? v.evaluationScore : '-',
+        nextActionPlan: v.nextActionPlan || '-',
+        nextVisitAt: v.nextVisitAt ? new Date(v.nextVisitAt).toLocaleString('th-TH') : '-',
+        winReason: v.winReason || '-',
+        needHelp: v.needHelp || '-',
       });
     });
 
