@@ -79,8 +79,8 @@ module.exports.listVisits = async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const filter = {};
-    // Sales can only see their own
-    if (!['admin', 'manager'].includes(req.user.role)) {
+    // Allow admin, manager, and sales to see all visits
+    if (!['admin', 'manager', 'sales'].includes(req.user.role)) {
       filter.createdBy = req.user._id;
     }
 
@@ -169,6 +169,13 @@ const canAccessVisit = (user, visit) => {
   return String(visit.createdBy) === String(user._id);
 };
 
+// View permission: admin, manager, and sales can view all; others only their own
+const canViewVisit = (user, visit) => {
+  if (!visit) return false;
+  if (['admin', 'manager', 'sales'].includes(user.role)) return true;
+  return String(visit.createdBy) === String(user._id);
+};
+
 // Get visit by id
 module.exports.getVisitById = async (req, res, next) => {
   try {
@@ -176,7 +183,7 @@ module.exports.getVisitById = async (req, res, next) => {
       .populate('customer', 'name province contacts businessCard')
       .populate('salesUser', 'displayName firstName lastName email role');
     if (!visit) return res.status(404).json({ status: 'fail', message: 'Visit not found' });
-    if (!canAccessVisit(req.user, visit)) {
+    if (!canViewVisit(req.user, visit)) {
       return res.status(403).json({ status: 'fail', message: 'Forbidden' });
     }
     res.status(200).json({ status: 'success', data: visit });
@@ -252,7 +259,7 @@ module.exports.exportVisits = async (req, res, next) => {
   try {
     // Reuse filter logic from listVisits
     const filter = {};
-    if (!['admin', 'manager'].includes(req.user.role)) {
+    if (!['admin', 'manager', 'sales'].includes(req.user.role)) {
       filter.createdBy = req.user._id;
     }
     const { startDate, endDate, customerName, status, customerId, salesName } = req.query;

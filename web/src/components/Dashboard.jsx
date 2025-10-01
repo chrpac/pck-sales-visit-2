@@ -29,7 +29,6 @@ function Dashboard({ user }) {
       const cn = overrides.customerName !== undefined ? overrides.customerName : customerName;
       const st = overrides.status !== undefined ? overrides.status : status;
       const sn = overrides.salesName !== undefined ? overrides.salesName : salesName;
-
       const params = { page: p, limit: l };
       if (s) params.startDate = s;
       if (e) params.endDate = e;
